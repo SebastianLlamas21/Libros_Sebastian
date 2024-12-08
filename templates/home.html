@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Home</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
+  
+  <style>
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: #469bf5;
+      color: white;
+    }
+    h1 {
+      color: #0056b3;
+      text-align: center;
+    }
+  </style>
+</head>
+<body style="background-color: #bcbcbc">
+  
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/index/">Libros Sebastian</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/about/">About</a>
+          </li>
+          <li class="nav-item">
+            {% block content %}
+              {% if user.is_authenticated %}
+                <p>Hi {{ user.username }}!</p>
+                <p><a href="{% url 'password_change' %}">Password Change</a></p>
+                <form action="{% url 'logout' %}" method="post">
+                  {% csrf_token %}
+                  <button type="submit">Log Out</button>
+                </form>
+              {% else %}
+                <a class="nav-link" href="{% url 'login' %}">Log In</a>
+              {% endif %}
+            {% endblock %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+<div class="container mt-5">
+  <!-- Sección de Autores -->
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Autores</h1>
+      <table id="tabla-autores" class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  
+
+  <!-- Sección de Libros -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <h1 class="mb-4">Libros</h1>
+      <table id="tabla-libros" class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Género</th>
+            <th>Lenguaje</th>
+            <th>Ventas</th>
+            <th>Año de Publicación</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery, DataTables, Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Tabla de Autores
+    $('#tabla-autores').DataTable({
+        "ajax": "/obtener_autores/",
+        "columns": [
+            { "data": "nombre" }
+        ]
+    });
+
+    // Tabla de Libros
+    $('#tabla-libros').DataTable({
+        "ajax": "/obtener_libros/",
+        "columns": [
+        { "data": "titulo" },
+            { "data": "autor" },
+            { "data": "genero" },
+            { "data": "lenguaje" },
+            { "data": "ventas" },
+            { "data": "publicacion" }
+        ]
+    });
+});
+</script>
+</body>
+</html>
