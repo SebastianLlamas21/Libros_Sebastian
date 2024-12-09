@@ -74,7 +74,7 @@
         <button type="button" class="close" onclick="cerrarModalAgregarLibro()" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="formAgregarLibro">
+        <form id="formAgregarLibro" method="post">
           {% csrf_token %}
           <div class="form-group">
             <label for="titulo">Título:</label>
@@ -100,9 +100,14 @@
             <label for="genero">Género:</label>
             <input type="text" class="form-control" id="genero" name="genero" required>
           </div>
+          <div class="form-group">
+            <label for="genero">Lenguaje:</label>
+            <input type="text" class="form-control" id="genero" name="lenguaje" required>
+          </div>
           <button type="submit" class="btn btn-primary">Guardar</button>
         </form>
       </div>
+      
       <div id="comentarios-{{ libro.id }}">
         {% csrf_token %}
 
@@ -187,24 +192,29 @@ $(document).ready(function() {
       });
     });
 
-    // Agregar libro
     $("#formAgregarLibro").submit(function(event) {
-      event.preventDefault();
-      var formData = $(this).serialize();
+      event.preventDefault();  // Evita que el formulario se envíe de manera convencional
+
+      var formData = $(this).serialize();  // Serializa los datos del formulario
+
       $.ajax({
         type: "POST",
-        url: "/agregar_libro/",
+        url: "{% url 'agregar_libro' %}",  // URL de la vista en Django que manejará la solicitud POST
         data: formData,
+        beforeSend: function(xhr) {
+      xhr.setRequestHeader('X-CSRFToken', csrfToken);  // Añadir token CSRF a la solicitud
+    },
         success: function(response) {
           if (response.status === 'ok') {
-            cerrarModalAgregarLibro();
-            tablaLibros.ajax.reload();
+            cerrarModalAgregarLibro();  // Cierra el modal de agregar libro
+            tablaLibros.ajax.reload();  // Recarga la tabla de libros para mostrar el nuevo libro
+            alert("Libro agregado exitosamente.");  // Mensaje de confirmación
           } else {
-            alert("Error al agregar libro.");
+            alert("Error al agregar libro: " + response.message);  // Muestra el mensaje de error desde la respuesta
           }
         },
-        error: function() {
-          alert("Error en la solicitud AJAX.");
+        error: function(xhr, status, error) {
+          alert("Error en la solicitud AJAX. Por favor, inténtelo de nuevo.");  // Muestra un mensaje genérico de error
         }
       });
     });
@@ -240,33 +250,25 @@ $(document).ready(function() {
 }
 
 //Cargar los comentarios segun el usuarios
+var csrfToken = '{{ csrf_token }}';
+
 function cargarComentarios(libroId) {
     $.ajax({
-        type: "GET",
         url: `/cargar_comentarios/${libroId}/`,
-        success: function(response) {
-            if (response.status === 'ok') {
-                const comentariosDiv = document.getElementById(`comentarios-${libroId}`);
-                comentariosDiv.innerHTML = '';
-
-                response.comentarios.forEach(comentario => {
-                    const comentarioHTML = `
-                        <div class="comentario">
-                            <p>${comentario.comentario}</p>
-                            <small>${comentario.fecha_creacion}</small>
-                            <button class="btn btn-danger btn-sm" onclick="eliminarComentario(${comentario.id}, ${libroId})">Eliminar</button>
-                        </div>`;
-                    comentariosDiv.innerHTML += comentarioHTML;
-                });
-            } else {
-                alert('Error al cargar comentarios: ' + response.message);
-            }
+        type: 'GET',
+        success: function(data) {
+            var comentariosDiv = document.getElementById(`comentarios-${libroId}`);
+            comentariosDiv.innerHTML = data.comentarios.map(comentario => `<p>${comentario.comentario} - ${comentario.fecha_creacion}</p>`).join('');
         },
         error: function() {
             alert('Hubo un error al cargar los comentarios.');
         }
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarComentarios(libroId); // Llama a cargar los comentarios automáticamente con el id del libro
+});
 
 //Eliminar un comentario
 function eliminarComentario(comentarioId, libroId) {

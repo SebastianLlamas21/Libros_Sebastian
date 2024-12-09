@@ -38,6 +38,7 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['user'] = self.request.user
+        context['autores'] = Autor.objects.all()  # Consulta para obtener todos los autores
         return context
    
 class AboutView(View):
@@ -91,7 +92,7 @@ class AgregarLibroView(CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['autores'] = Autor.objects.all()  # Asegúrate de importar el modelo Autor
+        context['autores'] = Autor.objects.all()  # Proporciona todos los autores para que se usen en el formulario
         return context
     
     def form_valid(self, form):
@@ -142,7 +143,7 @@ class CargarComentariosView(View):
         if not request.user.is_authenticated:
             return JsonResponse({'status': 'error', 'message': 'Usuario no autenticado'}, status=403)
 
-        comentarios = Comentario.objects.filter(libro_id=libro_id, usuario=request.user)
+        comentarios = Comentario.objects.filter(libro_id=libro_id)  # Cambiado: obtenemos los comentarios del libro actual
         comentarios_data = [
             {'id': comentario.id, 'comentario': comentario.comentario, 'fecha_creacion': comentario.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')}
             for comentario in comentarios
