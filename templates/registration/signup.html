@@ -1,12 +1,90 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libros Sebastian - Login</title>
+  
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
+  
+  <style>
+    /* Estilos personalizados en tonos azules */
+    .btn-primary, .modal-header, .table-striped tbody tr:nth-of-type(odd) {
+      background-color: #469bf5; /* Azul Bootstrap */
+      color: white;
+    }
 
-{% block title %}Sign Up{% endblock %}
+    .btn-primary:hover, .btn-danger {
+      background-color: #b33900; /* Azul oscuro */
+      color: white;
+    }
 
-{% block content %}
-<h2>Sign up</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form }}
-  <button type="submit">Sign Up</button>
-</form>
-{% endblock %}
+    .modal-content {
+      background-color: #e3f2fd; /* Azul claro */
+      border-color: #007bff;
+    }
+
+    .modal-header, .close {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .close:hover {
+      color: #d1e8ff;
+    }
+
+    h1 {
+      color: #0056b3; /* Azul oscuro para títulos */
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .comentario-celda {
+      max-width: 300px; /* Ajusta el tamaño según sea necesario */
+      white-space: nowrap; /* Evita que el texto se envuelva */
+      overflow: hidden;
+      text-overflow: ellipsis; /* Mostrar puntos suspensivos si hay más texto */
+    }
+
+    body {
+      background-color: #bcbcbc;
+    }
+
+    .form-container {
+      max-width: 400px;
+      margin: 50px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+
+  <script>
+    var csrfToken = '{{ csrf_token }}';  // Este es el token CSRF disponible en el template
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="form-container">
+      <h2>Sign up</h2>
+      <form method="post">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+  </div>
+  
+
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

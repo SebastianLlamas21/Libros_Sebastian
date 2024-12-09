@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Libros Sebastian</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
+  
+  <style>
+    /* Estilos personalizados en tonos azules */
+    .btn-primary, .modal-header, .table-striped tbody tr:nth-of-type(odd) {
+      background-color: #469bf5; /* Azul Bootstrap */
+      color: white;
+    }
+
+    .btn-primary:hover, .btn-danger {
+      background-color: #b33900; /* Azul oscuro */
+      color: white;
+    }
+
+    .modal-content {
+      background-color: #e3f2fd; /* Azul claro */
+      border-color: #007bff;
+    }
+
+    .modal-header, .close {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .close:hover {
+      color: #d1e8ff;
+    }
+
+    h1 {
+      color: #0056b3; /* Azul oscuro para títulos */
+      text-align: center;
+    }
+    .comentario-celda {
+            max-width: 300px; /* Ajusta el tamaño según sea necesario */
+            white-space: nowrap; /* Evita que el texto se envuelva */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Mostrar puntos suspensivos si hay más texto */
+    }
+  </style>
+  <script>
+    var csrfToken = '{{ csrf_token }}';  // Este es el token CSRF disponible en el template
+  </script>
+</head>
+<body style="background-color: #bcbcbc">
+
+<!--Autorizacion de inicio de sesion-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    {% if user.is_authenticated %}
+    <a class="navbar-brand" href="{% url 'home' %}">Libros Sebastian</a>
+  {% else %}
+    <a class="navbar-brand" href="{% url 'index' %}">Libros Sebastian</a>
+  {% endif %}    
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/about/">About</a>
+        </li>
+        <li class="nav-item d-flex align-items-center">
+            {% if user.is_authenticated %}
+              <span class="navbar-text me-3 text-white">Hola, {{ user.username }}!</span>
+              <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link nav-link p-0">Cerrar sesión</button>
+              </form>
+            {% else %}
+              <a class="nav-link" href="{% url 'login' %}">Iniciar sesión</a>
+            {% endif %}
+          </li>
+      </ul>
+    </div>
+  </div>
+</nav>

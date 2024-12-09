@@ -1,76 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Grid de Autores y Libros</title>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- DataTables CSS -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
-  
-  <style>
-    /* Estilos personalizados en tonos azules */
-    .btn-primary, .modal-header, .table-striped tbody tr:nth-of-type(odd) {
-      background-color: #469bf5; /* Azul Bootstrap */
-      color: white;
-    }
-
-    .btn-primary:hover, .btn-danger {
-      background-color: #b33900; /* Azul oscuro */
-      color: white;
-    }
-
-    .modal-content {
-      background-color: #e3f2fd; /* Azul claro */
-      border-color: #007bff;
-    }
-
-    .modal-header, .close {
-      background-color: #007bff;
-      color: white;
-    }
-
-    .close:hover {
-      color: #d1e8ff;
-    }
-
-    h1 {
-      color: #0056b3; /* Azul oscuro para títulos */
-      text-align: center;
-    }
-  </style>
-</head>
-<body style="background-color: #bcbcbc">
-
-<!--Autorizacion de inicio de sesion-->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/index/">Libros Sebastian</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/about/">About</a>
-        </li>
-        <li class="nav-item d-flex align-items-center">
-          {% block content %}
-          {% if user.is_authenticated %}
-            <span class="navbar-text me-3 text-white">Hi {{ user.username }}!</span>
-            <form action="{% url 'logout' %}" method="post" class="d-inline">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-link nav-link p-0">Log Out</button>
-            </form>
-          {% else %}
-            <a class="nav-link" href="{% url 'login' %}">Log In</a>
-          {% endif %}
-          {% endblock %}
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+{% include 'header.html' %}
 
 
 <div class="container mt-5">
@@ -106,6 +34,7 @@
             <th>Ventas</th>
             <th>Año de Publicación</th>
             <th>Acciones</th>
+            <th class="comentarios-celda">Comentarios</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -174,6 +103,13 @@
           <button type="submit" class="btn btn-primary">Guardar</button>
         </form>
       </div>
+      <div id="comentarios-{{ libro.id }}">
+        {% csrf_token %}
+
+        {% for comentario in comentarios %}
+            <p>{{ comentario.comentario }} - {{ comentario.usuario.username }}</p>
+        {% endfor %}
+    </div>
     </div>
   </div>
 </div>
@@ -206,11 +142,26 @@ $(document).ready(function() {
             { "data": "lenguaje" },
             { "data": "ventas" },
             { "data": "publicacion" },
-            { "data": null,
+            {
+                "data": null,
+                "render": function(data, type, row) {
+                    return '<button class="btn btn-danger btn-sm" onclick="eliminarLibro(' + row.id + ')">Eliminar</button>';
+                }
+            },
+            {
+              "data": null,
               "render": function(data, type, row) {
-                return '<button class="btn btn-danger btn-sm" onclick="eliminarLibro(' + row.id + ')">Eliminar</button>';
+                  setTimeout(() => cargarComentarios(row.id), 0); // Cargar comentarios automáticamente
+                  return `
+                      <form id="formAgregarComentario-${row.id}" onsubmit="agregarComentario(event, ${row.id})">
+                          <input type="text" name="comentario" placeholder="Añadir comentario" class="form-control">
+                          <button type="submit" class="btn btn-success btn-sm mt-1">Comentar</button>
+                      </form>
+                      <div id="comentarios-${row.id}" class="comentario-celda">
+                          <!-- Los comentarios se cargan aquí -->
+                      </div>`;
               }
-            }
+          }
         ]
     });
 
@@ -258,6 +209,86 @@ $(document).ready(function() {
       });
     });
 });
+
+    //Agregar Comentario
+    function agregarComentario(event, libroId) {
+  event.preventDefault();
+  var form = $(`#formAgregarComentario-${libroId}`);
+  var comentario = form.find('input[name="comentario"]').val();
+  
+  $.ajax({
+    url: `/agregar_comentario/${libroId}/`,
+    type: 'POST',
+    data: {
+      comentario: comentario
+    },
+    beforeSend: function(xhr) {
+      xhr.setRequestHeader('X-CSRFToken', csrfToken);  // Añadir token CSRF a la solicitud
+    },
+    success: function(response) {
+      if (response.status === 'ok') {
+        cargarComentarios(libroId);  // Cargar comentarios actualizados
+        form.find('input[name="comentario"]').val('');  // Limpiar el campo de texto
+      } else {
+        alert('Hubo un error al agregar el comentario.');
+      }
+    },
+    error: function() {
+      alert('Hubo un error en la solicitud.');
+    }
+  });
+}
+
+//Cargar los comentarios segun el usuarios
+function cargarComentarios(libroId) {
+    $.ajax({
+        type: "GET",
+        url: `/cargar_comentarios/${libroId}/`,
+        success: function(response) {
+            if (response.status === 'ok') {
+                const comentariosDiv = document.getElementById(`comentarios-${libroId}`);
+                comentariosDiv.innerHTML = '';
+
+                response.comentarios.forEach(comentario => {
+                    const comentarioHTML = `
+                        <div class="comentario">
+                            <p>${comentario.comentario}</p>
+                            <small>${comentario.fecha_creacion}</small>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarComentario(${comentario.id}, ${libroId})">Eliminar</button>
+                        </div>`;
+                    comentariosDiv.innerHTML += comentarioHTML;
+                });
+            } else {
+                alert('Error al cargar comentarios: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Hubo un error al cargar los comentarios.');
+        }
+    });
+}
+
+//Eliminar un comentario
+function eliminarComentario(comentarioId, libroId) {
+  $.ajax({
+    url: `/eliminar_comentario/${comentarioId}/`,
+    type: 'DELETE',
+    beforeSend: function(xhr) {
+      xhr.setRequestHeader('X-CSRFToken', csrfToken);  // Añadir token CSRF a la solicitud
+    },
+    success: function(response) {
+      if (response.status === 'ok') {
+        // Recargar los comentarios después de eliminar uno
+        cargarComentarios(libroId);
+      } else {
+        alert('Hubo un error al eliminar el comentario.');
+      }
+    },
+    error: function() {
+      alert('Hubo un error en la solicitud.');
+    }
+  });
+}
 
 function abrirModalAgregarAutor() {
   $('#modalAgregarAutor').modal('show');
