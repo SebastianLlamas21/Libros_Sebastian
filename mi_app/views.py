@@ -1,14 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.generic import View, ListView, CreateView, DeleteView
-from django.core import serializers
 from .models import Autor, Libro, Comentario
-from mi_app.forms import AutorForm, LibroForm, ComentarioForm
+from mi_app.forms import AutorForm, LibroForm
 from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 
 
@@ -75,10 +74,11 @@ class ObtenerLibrosView(ListView):
         return JsonResponse({'data': data})
 
 
-class AgregarAutorView(CreateView):
+@method_decorator(login_required, name='dispatch')
+class AgregarAutorView(UserPassesTestMixin, CreateView):
     model = Autor
     form_class = AutorForm
-
+    
     def form_valid(self, form):
         form.save()
         return JsonResponse({'status': 'ok'})
@@ -86,13 +86,18 @@ class AgregarAutorView(CreateView):
     def form_invalid(self, form):
         return JsonResponse({'status': 'error', 'errors': form.errors})
 
-class AgregarLibroView(CreateView):
+    def test_func(self):
+        # Comprobación de rol para solo staff
+        return self.request.user.is_staff
+
+@method_decorator(login_required, name='dispatch')
+class AgregarLibroView(UserPassesTestMixin, CreateView):
     model = Libro
     form_class = LibroForm
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['autores'] = Autor.objects.all()  # Proporciona todos los autores para que se usen en el formulario
+        context['autores'] = Autor.objects.all()  # Asegúrate de importar el modelo Autor
         return context
     
     def form_valid(self, form):
@@ -101,6 +106,10 @@ class AgregarLibroView(CreateView):
 
     def form_invalid(self, form):
         return JsonResponse({'status': 'error', 'errors': form.errors})
+
+    def test_func(self):
+        # Comprobación de rol para solo staff
+        return self.request.user.is_staff
 
         
 class EliminarAutorView(DeleteView):
